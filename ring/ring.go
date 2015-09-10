@@ -116,6 +116,10 @@ func (this *Ring) GetNode(key string) (string, bool) {
 	return server, ok
 }
 
+func (this *Ring) GetSelf() string {
+	return this.selfServerId
+}
+
 func (this *Ring) register() {
 	host := &service.Host{
 		Name:     this.selfServerId,
