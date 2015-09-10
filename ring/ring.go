@@ -101,12 +101,13 @@ func init() {
 }
 
 func (this *Ring) GetNode(key string) (string, bool) {
+	this.RLock()
+	defer this.RUnlock()
+
 	var server string
 	ok := true
 	value := this.cache.Get(key)
 	if value == nil {
-		this.RLock()
-		this.RUnlock()
 		server, ok = this.hashring.GetNode(key)
 		this.cache.Put(key, server, 10)
 	} else {
@@ -134,9 +135,6 @@ func (this *Ring) subscribe() {
 }
 
 func (this *Ring) refreshHashring() {
-	this.Lock()
-	defer this.Unlock()
-
 	var serverIds []string
 	serverIds = append(serverIds, this.selfServerId)
 	hs, err := service.Get(this.servicename)
@@ -156,16 +154,17 @@ func (this *Ring) refreshHashring() {
 		serverIds = append(serverIds, h.Name)
 	}
 
+	this.Lock()
+	defer this.Unlock()
 	this.hashring = hashring.New(serverIds)
+	this.cache.ClearAll()
 }
 
 func (this *Ring) addNode(serverId string) {
 	this.refreshHashring()
-	this.cache.ClearAll()
 }
 func (this *Ring) removeNode(serverId string) {
 	this.refreshHashring()
-	this.cache.ClearAll()
 }
 
 func (this *Ring) handleNew(hosts <-chan *service.Host) {
