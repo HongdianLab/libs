@@ -9,7 +9,7 @@ const (
 	HEARTBEAT_DURATION = 3
 )
 
-func Register(name string, task *Task) error {
+func RegisterOrUpdate(name string, task *Task) error {
 	key := fmt.Sprintf("/tasks/%s/%s", name, task.Name)
 	taskJson, err := json.Marshal(&task)
 	if err != nil {
