@@ -16,10 +16,7 @@ var (
 )
 
 func init() {
-	mc, err := cache.NewCache("memory", `{"interval":60}`)
-	if err != nil {
-		panic(err)
-	}
+	mc, _ = cache.NewCache("memory", `{"interval":60}`)
 }
 
 //register or update
@@ -30,7 +27,7 @@ func Register(name string, task *Task, params ...uint64) error {
 	}
 	if mc.Get(name+task.Name) == nil {
 		err := register(name, task, expire)
-		err = mc.Put(name+task.Name, true, expire)
+		err = mc.Put(name+task.Name, true, int64(expire))
 		return err
 	}
 	return nil
