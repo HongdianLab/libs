@@ -1,6 +1,8 @@
 package task
 
 import (
+	"github.com/astaxie/beego/cache"
+
 	"encoding/json"
 	"fmt"
 )
@@ -9,14 +11,29 @@ const (
 	HEARTBEAT_DURATION = 3
 )
 
+var (
+	mc cache.Cache
+)
+
+func init() {
+	mc, err := cache.NewCache("memory", `{"interval":60}`)
+	if err != nil {
+		panic(err)
+	}
+}
+
 //register or update
 func Register(name string, task *Task, params ...uint64) error {
 	var expire uint64 = 3 * HEARTBEAT_DURATION
 	if len(params) > 0 {
 		expire = params[0]
 	}
-	err := register(name, task, expire)
-	return err
+	if mc.Get(name+task.Name) == nil {
+		err := register(name, task, expire)
+		err = mc.Put(name+task.Name, true, expire)
+		return err
+	}
+	return nil
 }
 
 func register(name string, task *Task, expire uint64) error {
