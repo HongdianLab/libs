@@ -3,7 +3,7 @@ ring
 
 Implements consistent hashing that can be used when
 the number of server nodes can increase or decrease (like in memcached).
-The hashing ring is built using [etcd-discovery](https://github.com/Appsdeck/etcd-discovery/service) and [hashring](https://github.com/HongdianLab/hashring).
+Ring is built using [etcd-discovery](https://github.com/Appsdeck/etcd-discovery/service) and [hashring](https://github.com/HongdianLab/hashring).
 
 Using
 ============================
