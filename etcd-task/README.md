@@ -13,8 +13,8 @@ API
 ### Register a task
 
 ```go
-func registerTask(taskid, servicename string) {
-    t := task.NewTask(taskid, nil)                                                                                
+func registerTask(taskname, servicename string) {
+    t := task.NewTask(taskname, nil)                                                                                
     task.Register("task:"+servicename, t)
 }
 ```
@@ -48,6 +48,11 @@ func subscribeDown(servicename string) {
 ### Get all tasks
 ```go
 func getAll() {
-    
+    allTasks, err := task.Get("task:" + servicename )
+    if err==nil {
+        for task := range allTasks {
+            fmt.Println(task.Name)
+        }
+    }
 }
 ```
