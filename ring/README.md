@@ -29,3 +29,13 @@ func isMy(topic string) bool {
     return node == ts.r.GetSelf()
 } 
 ```
+
+Configure etcd
+```bash
+export ETCD_HOST=http://localhost:4001(default)
+
+## configure TLS client (optional)
+export ETCD_CACERT=caFilePath
+export ETCD_TLS_KEY=keyFilePath
+export ETCD_TLS_CERT=certFilePath
+```
