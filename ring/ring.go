@@ -153,8 +153,8 @@ func (this *Ring) refreshHashring() {
 		}
 	}
 
-	for _, h := range hs {
-		logger.Printf("%v\n", h.Name)
+	for idx, h := range hs {
+		logger.Printf("No.%v host %v\n", idx, h.Name)
 		serverIds = append(serverIds, h.Name)
 	}
 
