@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	HEARTBEAT_DURATION = 3
+	HEARTBEAT_DURATION = 10
 )
 
 var (
@@ -21,11 +21,12 @@ func init() {
 
 //register or update
 func Register(name string, task *Task, params ...uint64) error {
-	var expire uint64 = 3 * HEARTBEAT_DURATION
-	if len(params) > 0 {
-		expire = params[0]
-	}
 	if mc.Get(name+task.Name) == nil {
+		var expire uint64 = 3 * HEARTBEAT_DURATION
+		if len(params) > 0 {
+			expire = params[0]
+		}
+
 		err := register(name, task, expire)
 		err = mc.Put(name+task.Name, true, int64(expire))
 		return err
