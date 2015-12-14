@@ -75,10 +75,6 @@ func (bc *MemoryCache) Get(name string) interface{} {
 		}
 		item.Lastaccess = now
 		return item.val
-	} else {
-		val := bc.loader.Load(name)
-		go bc.putWithLock(name, val)
-		return val
 	}
 	return nil
 }
@@ -199,6 +195,8 @@ func (bc *MemoryCache) refreshByName(name string) bool {
 		return true
 	}
 	val := bc.loader.Load(name)
-	bc.put(name, val)
+	if val != nil {
+		bc.put(name, val)
+	}
 	return false
 }
