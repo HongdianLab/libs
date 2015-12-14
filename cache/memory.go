@@ -173,9 +173,23 @@ func (bc *MemoryCache) vaccuum() {
 			if bc.items == nil {
 				return
 			}
-			for name := range bc.items {
-				go bc.refreshByName(name)
+			tasks := make(chan string, 50000)
+			var wg sync.WaitGroup
+			for i := 0; i < 4; i++ {
+				wg.Add(1)
+				go func(bc *MemoryCache) {
+					defer wg.Done()
+					for name := range tasks {
+						bc.refreshByName(name)
+					}
+				}(bc)
 			}
+			for name := range bc.items {
+				tasks <- name
+			}
+			close(tasks)
+
+			wg.Wait()
 		case <-bc.stop:
 			return
 		}
@@ -197,6 +211,9 @@ func (bc *MemoryCache) refreshByName(name string) bool {
 	val := bc.loader.Load(name)
 	if val != nil {
 		bc.put(name, val)
+		return false
+	} else {
+		delete(bc.items, name)
+		return true
 	}
-	return false
 }
