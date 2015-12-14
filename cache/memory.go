@@ -36,7 +36,7 @@ func NewMemoryCache(loader Loader, refreshInterval int64) *MemoryCache {
 	cache := MemoryCache{
 		items:             make(map[string]*MemoryItem),
 		Every:             refreshInterval,
-		dur:               time.Duration(refreshInterval),
+		dur:               time.Duration(refreshInterval) * time.Second,
 		loader:            loader,
 		expireAfterWrite:  DefaultExpireAfterWrite,
 		expireAfterAccess: DefaultExpireAfterAccess,
@@ -124,7 +124,7 @@ func (bc *MemoryCache) put(name string, value interface{}) error {
 
 /// Invalid cache in memory.
 func (bc *MemoryCache) Invalid(name string) error {
-	fmt.Printf("Invalid %v", name)
+	fmt.Printf("Invalid %v\n", name)
 	bc.lock.Lock()
 	defer bc.lock.Unlock()
 	if _, ok := bc.items[name]; !ok {
@@ -168,9 +168,12 @@ func (bc *MemoryCache) vaccuum() {
 	if bc.Every < 1 {
 		return
 	}
+	fmt.Printf("start refresh %v\n", bc.dur)
+	heartbeatTicker := time.NewTicker(bc.dur)
+
 	for {
 		select {
-		case <-time.After(bc.dur):
+		case <-heartbeatTicker.C:
 			if bc.items == nil {
 				return
 			}
