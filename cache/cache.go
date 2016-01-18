@@ -31,8 +31,8 @@ type Loader interface {
 	Modify(key string, value interface{}) error
 }
 
-func NewCache(loader Loader, refreshInterval int64) (lc LoadingCache, err error) {
-	lc = NewMemoryCache(loader, refreshInterval)
+func NewCache(loader Loader, refreshInterval, writeTimeout int64) (lc LoadingCache, err error) {
+	lc = NewMemoryCache(loader, refreshInterval, writeTimeout)
 	err = lc.StartAndGC()
 	return
 }

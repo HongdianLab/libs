@@ -32,13 +32,17 @@ type MemoryCache struct {
 }
 
 // NewMemoryCache returns a new MemoryCache.
-func NewMemoryCache(loader Loader, refreshInterval int64) *MemoryCache {
+func NewMemoryCache(loader Loader, refreshInterval, writeTimeout int64) *MemoryCache {
+	if writeTimeout < 0 {
+		writeTimeout = DefaultExpireAfterWrite
+	}
+
 	cache := MemoryCache{
 		items:             make(map[string]*MemoryItem),
 		Every:             refreshInterval,
 		dur:               time.Duration(refreshInterval) * time.Second,
 		loader:            loader,
-		expireAfterWrite:  DefaultExpireAfterWrite,
+		expireAfterWrite:  writeTimeout,
 		expireAfterAccess: DefaultExpireAfterAccess,
 		stop:              make(chan bool, 1),
 	}
@@ -75,6 +79,8 @@ func (bc *MemoryCache) Get(name string) interface{} {
 		}
 		item.Lastaccess = now
 		return item.val
+	} else {
+		go bc.putWithLock(name, nil)
 	}
 	return nil
 }
