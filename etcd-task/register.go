@@ -1,7 +1,7 @@
 package task
 
 import (
-	"github.com/astaxie/beego/cache"
+	"github.com/HongdianLab/beego/cache"
 
 	"encoding/json"
 	"fmt"
