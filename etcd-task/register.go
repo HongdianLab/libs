@@ -28,7 +28,7 @@ func Register(name string, task *Task, params ...uint64) error {
 		}
 
 		err := register(name, task, expire)
-		err = mc.Put(name+task.Name, true, int64(expire))
+		err = mc.Put(name+task.Name, true, int64(HEARTBEAT_DURATION))
 		return err
 	}
 	return nil
