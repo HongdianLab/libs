@@ -181,7 +181,7 @@ func (bc *MemoryCache) vaccuum() {
 			}
 			tasks := make(chan string, 50000)
 			var wg sync.WaitGroup
-			for i := 0; i < 4; i++ {
+			for i := 0; i < 32; i++ {
 				wg.Add(1)
 				go func(bc *MemoryCache) {
 					defer wg.Done()
