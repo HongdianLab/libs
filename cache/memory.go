@@ -180,6 +180,7 @@ func (bc *MemoryCache) vaccuum() {
 				return
 			}
 			tasks := make(chan string, 50000)
+			bc.lock.Lock()
 			var wg sync.WaitGroup
 			for i := 0; i < 32; i++ {
 				wg.Add(1)
@@ -196,6 +197,7 @@ func (bc *MemoryCache) vaccuum() {
 			close(tasks)
 
 			wg.Wait()
+			bc.lock.Unlock()
 		case <-bc.stop:
 			return
 		}
@@ -204,8 +206,8 @@ func (bc *MemoryCache) vaccuum() {
 
 // refreshByName returns true if an item is expired.
 func (bc *MemoryCache) refreshByName(name string) bool {
-	bc.lock.Lock()
-	defer bc.lock.Unlock()
+	//bc.lock.Lock()
+	//defer bc.lock.Unlock()
 	item, ok := bc.items[name]
 	if !ok {
 		return true
