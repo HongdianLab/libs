@@ -25,7 +25,7 @@ type Ring struct {
 	selfServerId string
 	servicename  string
 	hashring     *hashring.HashRing
-	stop         chan bool
+	stop         chan struct{}
 	cache        cache.Cache
 }
 
@@ -45,7 +45,7 @@ func New(servicename, serviceport string) (*Ring, error) {
 		selfServerId: serverId,
 		servicename:  servicename,
 		hashring:     hashring.New([]string{serverId}),
-		stop:         make(chan bool),
+		stop:         make(chan struct{}),
 		cache:        mc,
 	}
 	r.register()
