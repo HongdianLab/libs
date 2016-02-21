@@ -2,8 +2,8 @@ package ring
 
 import (
 	"github.com/Appsdeck/etcd-discovery/service"
+	"github.com/HongdianLab/beego/cache"
 	"github.com/HongdianLab/hashring"
-	"github.com/astaxie/beego/cache"
 	"github.com/coreos/go-etcd/etcd"
 
 	"errors"

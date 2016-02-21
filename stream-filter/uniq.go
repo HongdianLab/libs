@@ -2,7 +2,7 @@ package filter
 
 import (
 	"container/list"
-	"github.com/astaxie/beego/cache"
+	"github.com/HongdianLab/beego/cache"
 	"github.com/satori/go.uuid"
 	"strconv"
 )
