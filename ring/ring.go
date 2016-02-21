@@ -30,7 +30,14 @@ type Ring struct {
 }
 
 func New(servicename, serviceport string) (*Ring, error) {
-	localIp, err := externalIP("eth0")
+	// XXX 在Mac上调试时，Mac没有eth0接口，会导致ring.New()失败。
+	// 建议增加一个参数，允许用户传入指定的Interface（因此用户程序可以将该配置写入配置文件）。
+	// 目前考虑到API兼容性，在上述方法获得一致同意前，不改动API，而是从环境变量读取。
+	iface, ok := os.LookupEnv("RING_SERVER_INTERFACE")
+	if !ok {
+		iface = "eth0"
+	}
+	localIp, err := externalIP(iface)
 	if err != nil {
 		return nil, err
 	}
