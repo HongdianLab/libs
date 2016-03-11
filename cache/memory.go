@@ -126,7 +126,6 @@ func (bc *MemoryCache) put(name string, value interface{}) error {
 
 /// Invalid cache in memory.
 func (bc *MemoryCache) Invalid(name string) error {
-	fmt.Printf("Invalid %v\n", name)
 	bc.lock.Lock()
 	defer bc.lock.Unlock()
 	if _, ok := bc.items[name]; !ok {
@@ -170,7 +169,6 @@ func (bc *MemoryCache) vaccuum() {
 	if bc.Every < 1 {
 		return
 	}
-	fmt.Printf("start refresh %v\n", bc.dur)
 	heartbeatTicker := time.NewTicker(bc.dur)
 
 	for {
