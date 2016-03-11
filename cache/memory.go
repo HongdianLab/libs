@@ -1,7 +1,8 @@
 package cache
 
 import (
-	"errors"
+	"github.com/HongdianLab/concurrent-map"
+
 	"fmt"
 	"sync"
 	"time"
@@ -23,8 +24,8 @@ type MemoryItem struct {
 type MemoryCache struct {
 	lock              sync.RWMutex
 	dur               time.Duration
-	items             map[string]*MemoryItem
-	Every             int64 // run an refreshKey Every clock time
+	items             cmap.ConcurrentMap // ConcurrentMap:map[string]*MemoryItem
+	Every             int64              // run an refreshKey Every clock time
 	loader            Loader
 	expireAfterWrite  int64
 	expireAfterAccess int64
@@ -37,8 +38,9 @@ func NewMemoryCache(loader Loader, refreshInterval, writeTimeout int64) *MemoryC
 		writeTimeout = DefaultExpireAfterWrite
 	}
 
+	cmap.SHARD_COUNT = 128
 	cache := MemoryCache{
-		items:             make(map[string]*MemoryItem),
+		items:             cmap.New(),
 		Every:             refreshInterval,
 		dur:               time.Duration(refreshInterval) * time.Second,
 		loader:            loader,
@@ -69,10 +71,9 @@ func (bc *MemoryCache) isExpired(item *MemoryItem, now int64) bool {
 // Get cache from memory.
 // if non-existed or expired, return nil.
 func (bc *MemoryCache) Get(name string) interface{} {
-	bc.lock.RLock()
-	defer bc.lock.RUnlock()
-	if item, ok := bc.items[name]; ok {
+	if v, ok := bc.items.Get(name); ok {
 		now := time.Now()
+		item := v.(*MemoryItem)
 		if bc.isExpired(item, now.Unix()) {
 			go bc.Invalid(name)
 			return nil
@@ -80,7 +81,7 @@ func (bc *MemoryCache) Get(name string) interface{} {
 		item.Lastaccess = now
 		return item.val
 	} else {
-		go bc.putWithLock(name, nil)
+		go bc.put(name, nil)
 	}
 	return nil
 }
@@ -103,47 +104,28 @@ func (bc *MemoryCache) Modify(name string, value interface{}) error {
 	}
 	val := bc.loader.Load(name)
 
-	err = bc.putWithLock(name, val)
+	bc.put(name, val)
 	return err
 }
 
-func (bc *MemoryCache) putWithLock(name string, value interface{}) error {
-	bc.lock.Lock()
-	defer bc.lock.Unlock()
-	err := bc.put(name, value)
-	return err
-}
-
-func (bc *MemoryCache) put(name string, value interface{}) error {
+func (bc *MemoryCache) put(name string, value interface{}) {
 	now := time.Now()
-	bc.items[name] = &MemoryItem{
+	bc.items.Set(name, &MemoryItem{
 		val:        value,
 		Lastaccess: now,
 		Lastwrite:  now,
-	}
-	return nil
+	})
 }
 
 /// Invalid cache in memory.
 func (bc *MemoryCache) Invalid(name string) error {
-	fmt.Printf("Invalid %v\n", name)
-	bc.lock.Lock()
-	defer bc.lock.Unlock()
-	if _, ok := bc.items[name]; !ok {
-		return errors.New("key not exist")
-	}
-	delete(bc.items, name)
-	if _, ok := bc.items[name]; ok {
-		return errors.New("delete key error")
-	}
+	bc.items.Remove(name)
 	return nil
 }
 
 // check cache exist in memory.
 func (bc *MemoryCache) IsExist(name string) bool {
-	bc.lock.RLock()
-	defer bc.lock.RUnlock()
-	_, ok := bc.items[name]
+	ok := bc.items.Has(name)
 	return ok
 }
 
@@ -151,7 +133,7 @@ func (bc *MemoryCache) IsExist(name string) bool {
 func (bc *MemoryCache) InvalidAll() error {
 	bc.lock.Lock()
 	defer bc.lock.Unlock()
-	bc.items = make(map[string]*MemoryItem)
+	bc.items = cmap.New()
 	return nil
 }
 
@@ -179,23 +161,19 @@ func (bc *MemoryCache) vaccuum() {
 			if bc.items == nil {
 				return
 			}
-			tasks := make(chan string, 50000)
+			tasks := bc.items.IterBuffered()
+
 			bc.lock.Lock()
 			var wg sync.WaitGroup
 			for i := 0; i < 32; i++ {
 				wg.Add(1)
 				go func(bc *MemoryCache) {
 					defer wg.Done()
-					for name := range tasks {
-						bc.refreshByName(name)
+					for tuple := range tasks {
+						bc.refreshByName(tuple.Key)
 					}
 				}(bc)
 			}
-			for name := range bc.items {
-				tasks <- name
-			}
-			close(tasks)
-
 			wg.Wait()
 			bc.lock.Unlock()
 		case <-bc.stop:
@@ -206,14 +184,13 @@ func (bc *MemoryCache) vaccuum() {
 
 // refreshByName returns true if an item is expired.
 func (bc *MemoryCache) refreshByName(name string) bool {
-	//bc.lock.Lock()
-	//defer bc.lock.Unlock()
-	item, ok := bc.items[name]
+	v, ok := bc.items.Get(name)
 	if !ok {
 		return true
 	}
+	item := v.(*MemoryItem)
 	if bc.isExpired(item, time.Now().Unix()) {
-		delete(bc.items, name)
+		bc.items.Remove(name)
 		return true
 	}
 	val := bc.loader.Load(name)
@@ -221,7 +198,7 @@ func (bc *MemoryCache) refreshByName(name string) bool {
 		bc.put(name, val)
 		return false
 	} else {
-		delete(bc.items, name)
+		bc.items.Remove(name)
 		return true
 	}
 }

@@ -67,16 +67,8 @@ var (
 	loader = &RedisLoader{
 		pool: newRedisPool("127.0.0.1:6379", ""),
 	}
-	c, err = NewCache(loader, 10)
+	c, err = NewCache(loader, 2, 10)
 )
-
-func TestLoadingGet(t *testing.T) {
-	Convey("GET", t, func() {
-		loader.do("SET", key, value)
-		v := c.Get(key)
-		So(v, ShouldEqual, value)
-	})
-}
 
 func TestModify(t *testing.T) {
 	Convey("Modify", t, func() {
@@ -102,6 +94,6 @@ func TestInvalid(t *testing.T) {
 		err = c.Invalid(key)
 		So(err, ShouldBeNil)
 		v = c.Get(key)
-		So(v, ShouldEqual, value2)
+		So(v, ShouldBeNil)
 	})
 }
