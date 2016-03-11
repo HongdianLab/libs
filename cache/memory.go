@@ -3,7 +3,6 @@ package cache
 import (
 	"github.com/HongdianLab/concurrent-map"
 
-	"fmt"
 	"sync"
 	"time"
 )
@@ -152,7 +151,6 @@ func (bc *MemoryCache) vaccuum() {
 	if bc.Every < 1 {
 		return
 	}
-	fmt.Printf("start refresh %v\n", bc.dur)
 	heartbeatTicker := time.NewTicker(bc.dur)
 
 	for {
