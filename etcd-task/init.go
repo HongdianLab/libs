@@ -21,6 +21,10 @@ func Client() *etcd.Client {
 		if len(os.Getenv("ETCD_HOSTS")) != 0 {
 			strhosts := os.Getenv("ETCD_HOSTS")
 			hosts = strings.Split(strhosts, ",")
+		} else {
+			if len(os.Getenv("ETCD_HOST")) != 0 {
+				hosts[0] = os.Getenv("ETCD_HOST")
+			}
 		}
 
 		cacert := os.Getenv("ETCD_CACERT")
