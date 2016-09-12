@@ -13,7 +13,19 @@ func Subscribe(name string) (<-chan *etcd.Response, <-chan *etcd.EtcdError) {
 	go func() {
 		_, err := Client().Watch("/tasks/"+name, 0, true, responses, stop)
 		if err != nil {
-			errors <- err.(*etcd.EtcdError)
+			e, ok := err.(*etcd.EtcdError)
+			if ok {
+				errors <- e
+			} else {
+				syserr, ok := err.(error)
+				if ok {
+					errors <- &etcd.EtcdError{
+						ErrorCode: etcd.ErrCodeEtcdNotReachable,
+						Cause:     syserr.Error(),
+						Index:     0,
+					}
+				}
+			}
 			close(errors)
 			close(stop)
 			return
